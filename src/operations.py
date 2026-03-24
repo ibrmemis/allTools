@@ -279,7 +279,7 @@ def op_extract_photos(file_paths: list[str], log) -> int:
         img = cv2.imdecode(numpy_array, cv2.IMREAD_UNCHANGED)
         
         if img is None:
-            log(f"✖ {fname}: Görüntü okunamadı.")
+            log(f"✖ {fname}: Görüntü okunamadı kardeş")
             continue
 
         # Gri tonlamaya çevir (Haar Cascade gri resimde çalışır)

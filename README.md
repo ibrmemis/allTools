@@ -27,4 +27,6 @@ python main.py
 ```
 
 ## Geliştirici
-**dESkart** - [GitHub Profiliniz](https://github.com/v-burakyildiz) (Burayı güncelleyebilirsiniz).
+**dESkart** - [GitHub Profiliniz](https://github.com/ibrmemis)
+
+
