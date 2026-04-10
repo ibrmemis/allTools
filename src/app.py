@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Ensure the project root is in sys.path so `from src.xxx` imports work
+# regardless of whether this file is run directly or as a module.
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import threading
@@ -96,6 +104,7 @@ class AllToolsApp(ctk.CTk):
         self._n_var  = tk.StringVar(value="4")
         self._dpi_var = tk.StringVar(value="150")
         self._apply_to_all = tk.BooleanVar(value=False)
+        self._hybrid_start_var = tk.StringVar(value="1")
 
         # İşlem seçenek değişkenleri
         self._opts = {
@@ -313,7 +322,13 @@ class AllToolsApp(ctk.CTk):
         ctk.CTkCheckBox(
             f_row2, text="Hibrit (Haar + Dlib)", variable=self._opts["ext_photos_hybrid"],
             checkbox_width=20, checkbox_height=20, font=FONT_BODY, fg_color=ACCENT, hover_color=ACCENT2
-        ).pack(side="left", expand=True, anchor="w")
+        ).pack(side="left", anchor="w")
+        ctk.CTkLabel(f_row2, text="Başlat:", font=FONT_SMALL, text_color=SUBTEXT).pack(side="left", padx=(8, 2))
+        ctk.CTkEntry(
+            f_row2, textvariable=self._hybrid_start_var,
+            width=46, height=24, font=FONT_BODY,
+            fg_color=BG, border_color=BORDER, text_color=TEXT
+        ).pack(side="left")
 
         # Tümünü seç / kaldır
         btn_row = ctk.CTkFrame(parent, fg_color="transparent")
@@ -534,8 +549,15 @@ class AllToolsApp(ctk.CTk):
                 total += c
             
             if "ext_photos_hybrid" in selected_operations:
-                self._log(f"\n[7c] Yapay Zeka (Hibrit: Haar + Dlib) ile vesikalıklar tespit edilip kesiliyor...")
-                c = op_extract_photos_hybrid(selected_files, self._log)
+                try:
+                    hybrid_start = int(self._hybrid_start_var.get().strip())
+                    if hybrid_start < 1: raise ValueError
+                except ValueError:
+                    self._log("\n✖ HATA: Hibrit başlangıç numarası geçersiz. Lütfen 1 veya daha büyük bir sayı girin.")
+                    self._set_status("Hata oluştu", DANGER)
+                    return
+                self._log(f"\n[7c] Yapay Zeka (Hibrit: Haar + Dlib) ile vesikalıklar tespit edilip kesiliyor... (Başlangıç: {hybrid_start})")
+                c = op_extract_photos_hybrid(selected_files, self._log, start_num=hybrid_start)
                 self._log(f"   ✅ {c} adet yüz başarıyla ayrı dosyalara çıkarıldı.")
                 total += c
                 

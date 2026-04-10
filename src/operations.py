@@ -450,10 +450,11 @@ def op_extract_photos_dlib(file_paths: list[str], log) -> int:
     return total_faces_extracted
 
 
-def op_extract_photos_hybrid(file_paths: list[str], log) -> int:
+def op_extract_photos_hybrid(file_paths: list[str], log, start_num: int = 1) -> int:
     """
     Hibrit yöntem: Önce Haar Cascade dener, başarısız olursa dlib kullanır.
-    En iyi sonuç için her iki yöntemi de dener.
+    Yüzler sol üstten sağa-aşağı sıralanır ve start_num'dan başlayarak
+    sade rakamla isimlendirilir: 1.png, 2.png, ...
     """
     try:
         import cv2
@@ -564,37 +565,43 @@ def op_extract_photos_hybrid(file_paths: list[str], log) -> int:
         if len(faces) < 2:
             log(f"⚠ {fname}: Çoklu vesikalık tespit edilemedi (Bulunan Yüz: {len(faces)}). Atlanıyor.")
             continue
-            
-        log(f"🔍 {fname}: {method_used} kullanılarak {len(faces)} adet yüz kesiliyor...")
+
+        # ── Yüzleri sol üstten sağa-aşağıya doğru sırala ──────────────────
+        # Önce satır (y konumu), aynı satırdaysa sütun (x konumu) öncelikli.
+        # Satır toleransı: yüz yüksekliğinin yarısı kadar y farkı aynı satır sayılır.
+        row_tolerance = min(h for (_, _, _, h) in faces) // 2
+        faces_sorted = sorted(faces, key=lambda f: (f[1] // max(row_tolerance, 1), f[0]))
+        # ────────────────────────────────────────────────────────────────────
+
+        log(f"🔍 {fname}: {method_used} kullanılarak {len(faces_sorted)} adet yüz sol üstten sağa-aşağı sırayla kesiliyor...")
 
         # Her bir yüz için genişletilmiş bir çerçeve kes
-        for i, (x, y, w, h) in enumerate(faces):
+        for i, (x, y, w, h) in enumerate(faces_sorted):
             top_padding = int(h * 0.6)
             bottom_padding = int(h * 0.5)
             side_padding = int(w * 0.45)
-            
+
             new_x = max(0, x - side_padding)
             new_y = max(0, y - top_padding)
             new_w = min(img.shape[1] - new_x, w + (side_padding * 2))
             new_h = min(img.shape[0] - new_y, h + top_padding + bottom_padding)
-            
+
             face_img = img[new_y:new_y+new_h, new_x:new_x+new_w]
-            
-            # Kaydet - Hangi yöntem kullanıldıysa ona göre isimlendir
-            if method_used == "Haar Cascade":
-                out_name = f"{name}_haar_{i+1}{ext}"
-            else:  # Dlib kullanıldı
-                out_name = f"{name}_dlib_gelismis_{i+1}{ext}"
+
+            # Sade rakamla isimlendirme: start_num'dan başlayarak artan sayı
+            out_num = start_num + total_faces_extracted
+            out_name = f"{out_num}{ext}"
             out_path = os.path.join(folder, out_name)
-            
+
             is_success, buffer = cv2.imencode(ext, face_img)
             if is_success:
                 with open(out_path, "wb") as f_out:
                     f_out.write(buffer)
+                log(f"   ✔ [{out_num}] → {out_name}  (x={x}, y={y})")
                 total_faces_extracted += 1
             else:
                 log(f"✖ {out_name} kaydedilemedi!")
-                
-        log(f"✔ {fname} içindeki {len(faces)} resim başarıyla ayrıldı ({method_used}).")
+
+        log(f"✔ {fname} içindeki {len(faces_sorted)} resim başarıyla ayrıldı ({method_used}).")
 
     return total_faces_extracted
