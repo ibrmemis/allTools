@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "dESKart Uygulamasını Çalıştır",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "python": "C:\\Users\\des_i5\\AppData\\Local\\Programs\\Python\\Python314\\python.exe"
+        }
+    ]
+}

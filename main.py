@@ -4,6 +4,7 @@ from src.utils import check_and_install
 check_and_install("Pillow", "PIL")
 check_and_install("pdf2image")
 check_and_install("customtkinter")
+check_and_install("openpyxl")
 
 if __name__ == "__main__":
     from src.app import AllToolsApp
